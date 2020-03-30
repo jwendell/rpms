@@ -3,3 +3,4 @@
 **/*.tar.xz
 **/*.rpm
 istio/ISTIO
+ior/IOR

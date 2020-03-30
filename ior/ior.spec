@@ -1,6 +1,6 @@
 %undefine _missing_build_ids_terminate_build
 
-%global git_commit a0a64d8cfa8e6de4b924f2db4374f1065b3e91ab
+%global git_commit 67fd95659451a003898cb42ebe79acd4d1c56a17
 %global git_shortcommit  %(c=%{git_commit}; echo ${c:0:7})
 
 %global provider        github
@@ -13,7 +13,7 @@
 %global provider_prefix %{provider}.%{provider_tld}/%{project}/%{repo}
 
 Name:           ior
-Version:        0.12.0
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        Istio + OpenShift Routing
 License:        ASL 2.0
@@ -36,7 +36,7 @@ tar zxf %{SOURCE0} -C IOR/src/%{provider_prefix} --strip=1
 
 %build
 cd IOR
-export GOPATH=$(pwd):%{gopath}
+export GOPATH=$(pwd) GO111MODULE=on
 
 pushd src/%{provider_prefix}
 make VERSION=%{version} GITREVISION=%{git_shortcommit} GITSTATUS=Clean GITTAG=%{version}-%{release}
@@ -87,18 +87,5 @@ cd IOR/src/%{provider_prefix}
 %{_bindir}/ior
 
 %changelog
-* Wed Jun 12 2019 Brian Avery <bavery@redhat.com> - 0.12.0
-- Update to Maistra 0.12
-
-* Fri May 17 2019 Jonh Wendell <jonh.wendell@redhat.com> - 0.11.0
-- Update to include version info at build time
-* Mon May 13 2019 Brian Avery <bavery@redhat.com> - 0.11.0
-- Maistra 0.11 release
-* Fri Mar 22 2019 Brian Avery <bavery@redhat.com> - 0.10.0
-- Maistra 0.10 release
-* Mon Mar 4 2019 Brian Avery <bavery@redhat.com> - 0.9.0
-- Maistra 0.9 release
-* Thu Feb 14 2019 Kevin Conner <kconner@redhat.com> - 0.8.0
-- First package
-* Mon Jan 14 2019 Jonh Wendell <jonh.wendell@redhat.com> - 0.6.0
-- First package
+* Mon Mar 30 2020 Jonh Wendell <jwendell@redhat.com> - 1.1.0
+- First package for 1.1
