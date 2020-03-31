@@ -13,7 +13,7 @@
 %global debug_package   %{nil}
 %endif
 
-%global git_commit 259bb0321cdabf58218190ef0ac8bf57eeaae43e
+%global git_commit 3a076c29531c848e5d2e846832eb33717f4be042
 %global git_shortcommit  %(c=%{git_commit}; echo ${c:0:7})
 
 %global provider        github
@@ -42,7 +42,7 @@ Source0:        https://%{provider_prefix}/%{repo}/archive/%{git_commit}/%{repo}
 # e.g. el6 has ppc64 arch without gcc-go, so EA tag is required
 ExclusiveArch:  %{?go_arches:%{go_arches}}%{!?go_arches:%{ix86} x86_64 aarch64 %{arm}}
 # If go_compiler is not set to 1, there is no virtual provide. Use golang instead.
-BuildRequires:  golang >= 1.9
+BuildRequires:  golang >= 1.13
 
 %description
 Istio-operator is a kubernetes operator to manage the lifecycle of Istio.
@@ -134,86 +134,3 @@ popd
 %changelog
 * Tue Feb 25 2020 Brian Avery <bavery@redhat.com> - 1.1.0-1
 - Update to Maistra 1.1
-
-* Mon Jan 13 2020 Kevin Conner <kconner@redhat.com> - 1.0.4-1
-- Bump version to 1.0.4
-
-* Thu Oct 17 2019 Jonh Wendell <jonh.wendell@redhat.com> - 1.0.2-1
-- Bump version to 1.0.2
-
-* Sun Sep 1 2019 Brian Avery <bavery@redhat.com> - 1.0.0-3
-- Updated to the Maistra 1.0.0 GA release
-
-* Thu Aug 08 2019 Daniel Grimm <dgrimm@redhat.com> - 1.0.0-2
-- Added templates directory
-- pulled in latest operator changes
-- pulled in latest Maistra charts
-* Thu Jul 26 2019 Dmitri Dolguikh <ddolguik@redhat.com> - 1.0.0-1
-- Added manifests dir
-* Mon Jul 15 2019 Brian Avery <bavery@redhat.com> - 0.12.0-2
-- Update to Maistra 0.12.0 release
-* Wed Jun 12 2019 Brian Avery <bavery@redhat.com> - 0.12.0-1
-- Update to Istio 1.1.8
-* Mon May 27 2019 Kevin Conner <kconner@redhat.com> - 0.11.0-6
-* Pull in latest operator changes
-
-* Fri May 24 2019 Kevin Conner <kconner@redhat.com> - 0.11.0-5
-* Pull in latest operator changes
-
-* Thu May 23 2019 Kevin Conner <kconner@redhat.com> - 0.11.0-4
-* Pull in latest operator changes
-
-* Wed May 22 2019 Brian Avery <bavery@redhat.com> - 0.11.0-3
-* Move Jaeger earlier in the installation process
-
-* Tue May 21 2019 Brian Avery <bavery@redhat.com> - 0.11.0-2
-- Update Kiali version
-
-* Mon May 20 2019 Brian Avery <bavery@redhat.com> - 0.11.0-1
-- Maistra 0.11
-
-* Thu Apr 15 2019 Rob Cernich <rcernich@redhat.com> - 0.10.0-6
-- watch istio-system for ControlPlane CR
-- watch istio-operator for Installation CR
-
-* Thu Mar 28 2019 Rob Cernich <rcernich@redhat.com> - 0.10.0-1
-- Added helm charts used by new installer
-
-* Mon Mar 25 2019 Brian Avery <bavery@redhat.com> - 0.10.0-1
-- Updated to 0.10.0/New installer
-
-* Mon Mar 4 2019 Kevin Conner <kconner@redhat.com> - 0.9.0-1
-- Updated to 0.9.0
-
-* Thu Feb 14 2019 Kevin Conner <kconner@redhat.com> - 0.8.0-1
-- Updated to 0.8.0
-
-* Mon Jan 28 2019 Kevin Conner <kconner@redhat.com> - 0.7.0-3
-- Updates to 3scale adapter integration
-
-* Fri Jan 25 2019 Kevin Conner <kconner@redhat.com> - 0.7.0-2
-- Updated to include 3scale adapter configuration
-
-* Thu Jan 17 2019 Kevin Conner <kconner@redhat.com> - 0.7.0
-- Updated to 0.7.0
-
-* Thu Dec 20 2018 Kevin Conner <kconner@redhat.com> - 0.6.0
-- Updated to 0.6.0
-
-* Fri Nov 23 2018 Kevin Conner <kconner@redhat.com> - 0.5.0
-- Updated to 0.5.0
-
-* Wed Oct 31 2018 Kevin Conner <kconner@redhat.com> - 0.4.0
-- Updated to 0.4.0
-
-* Wed Oct 17 2018 Kevin Conner <kconner@redhat.com> - 0.3.0
-- Updated to 0.3.0
-
-* Fri Oct 12 2018 Brian Avery <bavery@redhat.com> - 0.3.0
-- Added 0.3.0
-
-* Tue Sep 4 2018 Brian Avery <bavery@redhat.com> - 0.1.0
-- Stripped binaries
-
-* Tue Aug 14 2018 Brian Avery <bavery@redhat.com> - 0.1.0
-- First package
