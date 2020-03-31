@@ -1,6 +1,6 @@
 %undefine _missing_build_ids_terminate_build
 
-%global git_commit 9b9c08e8a7104c51ee5ef836a304b7e13d170608
+%global git_commit 1e3db221bacf9b9c4e0fbb9fb0665204fa6c4093
 %global git_shortcommit  %(c=%{git_commit}; echo ${c:0:7})
 
 %global provider        github
@@ -13,7 +13,7 @@
 %global provider_prefix %{provider}.%{provider_tld}/%{project}/%{repo}
 
 Name:           istio-cni
-Version:        1.0.4
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        Istio CNI Plugin
 License:        ASL 2.0
@@ -24,7 +24,7 @@ Source0:        https://%{provider_prefix}/archive/%{git_commit}/%{repo}-%{git_c
 # e.g. el6 has ppc64 arch without gcc-go, so EA tag is required
 ExclusiveArch:  %{?go_arches:%{go_arches}}%{!?go_arches:%{ix86} x86_64 aarch64 %{arm}}
 # If go_compiler is not set to 1, there is no virtual provide. Use golang instead.
-BuildRequires:  golang >= 1.9
+BuildRequires:  golang >= 1.13
 
 %description
 istio-cni is a Container Network Interface (CNI) Plugin that sets up Istio iptables rules for a Pod.
@@ -97,23 +97,5 @@ install -p -m 755 deployments/kubernetes/install/scripts/istio-cni.conf.default 
 
 
 %changelog
-* Mon Jan 13 2020 Kevin Conner <kconner@redhat.com> - 1.0.4-1
-- Bump version to 1.0.4
-
-* Thu Oct 17 2019 Jonh Wendell <jonh.wendell@redhat.com> - 1.0.2-1
-- Bump version to 1.0.2
-
-* Sun Sep 1 2019 Brian Avery <bavery@redhat.com> - 1.0.0
-- Updated to the Maistra 1.0.0 GA release
-
-* Mon Jul 15 2019 Brian Avery <bavery@redhat.com> - 0.12.0-4
-- Update to Maistra 0.12 release
-
-* Tue Jul 2 2019 Marko Luksa <mluksa@redhat.com> - 0.12.0-3
-- Include proper fix for MAISTRA-556
-
-* Tue Jul 2 2019 Marko Luksa <mluksa@redhat.com> - 0.12.0-2
-- Include MAISTRA-550, MAISTRA-556
-
-* Fri Jun 14 2019 Marko Luksa <mluksa@redhat.com> - 0.12.0-1
-- First package
+* Tue Mar 31 2020 Jonh Wendell <jwendell@redhat.com> - 1.1.0-1
+- First 1.1 version
