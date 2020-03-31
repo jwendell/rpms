@@ -7,7 +7,7 @@
 %global debug_package %{nil}
 %endif
 
-%global git_commit 3010d6a9069b0820e637470a58d8869ef64d7541
+%global git_commit 7b962f116b97a920a3ea39b287c6ea4748ea418e
 %global git_shortcommit  %(c=%{git_commit}; echo ${c:0:7})
 
 Name:           prometheus
@@ -18,7 +18,7 @@ License:        ASL 2.0
 URL:            https://prometheus.io/
 
 BuildRequires:  prometheus-promu = 0.5.0
-BuildRequires:  golang >= 1.12
+BuildRequires:  golang >= 1.13
 
 Source0:        https://github.com/maistra/prometheus/archive/%{git_commit}.tar.gz
 
@@ -124,15 +124,3 @@ cp -a documentation/examples/prometheus.yml $RPM_BUILD_ROOT%{_sysconfdir}/%{bina
 %changelog
 * Tue Jan 28 2020 Daniel Grimm <dgrimm@redhat.com> - 2.14.0-1
 - Update to Prometheus v2.14.0
-
-* Tue Nov 12 2019 Kevin Conner <kconner@redhat.com> - 2.7.2-4
-- Maistra 1.0.2 release
-
-* Mon Sep 9 2019 Kevin Conner <kconner@redhat.com> - 2.7.2-3
-- Maistra 1.0.0 release
-
-* Mon Jul 15 2019 Brian Avery <bavery@redhat.com> - 2.7.2-2
-- Maistra 0.12.0 release
-
-* Wed Jun 19 2019 Dmitri Dolguikh <ddolguik@redhat.com> - 2.7.2-1
-- First build
