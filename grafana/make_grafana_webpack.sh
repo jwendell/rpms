@@ -44,8 +44,8 @@ sed -i '/phantomjs/d' scripts/grunt/*.js
 # populate node_modules using package.json
 echo Running yarn to populate local node_modules ....
 npm install yarn
+rm -f package-lock.json
 node_modules/yarn/bin/yarn --non-interactive --no-progress --ignore-engines install --pure-lockfile > yarn.out 2>&1
-node_modules/yarn/bin/yarn --non-interactive -W add webpack-cli
 
 # build the webpack
 echo;echo Building production webpack ....

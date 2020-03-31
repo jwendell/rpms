@@ -1,5 +1,5 @@
 diff --git a/pkg/api/login_oauth.go b/pkg/api/login_oauth.go
-index a3599bc7a..0c6579847 100644
+index a46c972380..76fc8480c1 100644
 --- a/pkg/api/login_oauth.go
 +++ b/pkg/api/login_oauth.go
 @@ -125,7 +125,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {

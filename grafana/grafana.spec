@@ -1,16 +1,14 @@
 # Build with debug info rpm
 %global with_debug 0
 
-%global version 6.2.2
-
 Name:             grafana
-Version:          6.2.2
-Release:          4%{?dist}
+Version:          6.4.3
+Release:          1%{?dist}
 Summary:          Metrics dashboard and graph editor
 License:          ASL 2.0
 URL:              https://grafana.org
 
-%global webpack_hash 5cc21d350fe788c277b74d39dbcb8dc13ea9c09460e1b85e543558482295d91a
+%global webpack_hash ba87afb30238f152af64b1c7d80ed24a7bc11968ea265a64c3ff0b22a51e4df9
 
 # Source0 contains the tagged upstream sources
 Source0:          https://github.com/grafana/grafana/archive/v%{version}/grafana-%{version}.tar.gz
@@ -25,13 +23,16 @@ Source1:          grafana_webpack-%{version}.%{webpack_hash}.tar.gz
 Patch1:           001-login-oauth-use-oauth2-exchange.patch
 Patch2:           002-remove-jaeger-tracing.patch
 Patch3:           003-new-files.patch
-Patch4:           900-make-annobin-happy.patch
+Patch4:           004-xerrors.patch
+Patch5:           005-mute-shellcheck-grafana-cli.patch
+Patch6:           900-make-annobin-happy.patch
 
 # Intersection of go_arches and nodejs_arches
 # FIXME? macro evaluates to empty
 # ExclusiveArch:    %{grafana_arches}
 
 # omit golang debugsource, see BZ995136 and related
+%global           dwz_low_mem_die_limit 0
 %global           _debugsource_template %{nil}
 
 %global           GRAFANA_HOME %{_datadir}/%{name}
@@ -153,12 +154,14 @@ Summary: Grafana prometheus datasource
 The Grafana prometheus datasource.
 
 %prep
-%setup -q -T -D -b 0 #extract SOURCE0 in $RPM_BUILD_ROOT
-%setup -q -T -D -b 1 #extract SOURCE1 in $RPM_BUILD_ROOT
+%setup -q -T -D -b 0 -n grafana-%{version}
+%setup -q -T -D -b 1 -n grafana-%{version}
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
+%patch6 -p1
 
 # Set up build subdirs and links
 mkdir -p %{_builddir}/src/github.com/grafana
@@ -169,18 +172,14 @@ ln -sf %{_builddir}/%{binary_name}-%{version} \
 rm -f public/sass/.sass-lint.yml public/test/.jshintrc
 
 %build
-# Build the server-side binaries: grafana-server and grafana-cli
-%if 0%{?gobuild}
-# use modern go macros such as in recent Fedora
-export GOPATH=%{_builddir}:%{gopath}
-%gobuild -o grafana-cli ./pkg/cmd/grafana-cli
-%gobuild -o grafana-server ./pkg/cmd/grafana-server
-%else
 cd %{_builddir}/src/github.com/grafana/grafana
-export GOPATH=%{_builddir}:%{gopath}
-go run build.go build
-%endif
+%global archbindir bin/`go env GOOS`-`go env GOARCH`
+echo _builddir=%{_builddir} archbindir=%{archbindir}
+[ ! -d %{archbindir} ] && mkdir -p %{archbindir}
 
+# Build the server-side binaries: grafana-server and grafana-cli
+go build -mod=vendor -o %{archbindir}/grafana-cli ./pkg/cmd/grafana-cli
+go build -mod=vendor -o %{archbindir}/grafana-server ./pkg/cmd/grafana-server
 
 %install
 # Fix up arch bin directories
@@ -282,6 +281,7 @@ install -p -m 644 packaging/rpm/systemd/grafana-server.service \
 %config(noreplace) %attr(644, root, root) %{_sysconfdir}/%{binary_name}/ldap.toml
 %config(noreplace) %{_sysconfdir}/sysconfig/grafana-server
 
+# config database directory and plugins (actual db files are created by grafana-server)
 %dir %{_sharedstatedir}/%{binary_name}
 %dir %{_sharedstatedir}/%{binary_name}/plugins
 
@@ -326,15 +326,5 @@ install -p -m 644 packaging/rpm/systemd/grafana-server.service \
 %{_datadir}/%{binary_name}/public/app/plugins/datasource/prometheus
 
 %changelog
-* Mon Sep 9 2019 Kevin Conner <kconner@redhat.com> - 6.2.2-4
-- Updated for maistra 1.0.0 release
-
-* Fri Aug 16 2019 Dmitri Dolguikh <ddolguik@redhat.com> - 6.2.2-3
-- Removed grafana user creation
-
-* Mon Jul 15 2019 Brian Avery <bavery@redhat.com> - 6.2.2-2
-- Maistra 0.12.0 release
-
-* Fri Jun 21 2019 Dmitri Dolguikh <ddolguik@redhat.com> 6.2.2-1
-- Created grafana package to be used with Mesh/Maistra.
-  Based on work by mgoodwin@redhat.com & others
+* Tue Mar 31 2020 Jonh Wendell <jwendell@redhat.com> - 6.4.3-1
+- First version for Maistra 1.1

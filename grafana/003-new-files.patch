@@ -1,9 +1,9 @@
 diff --git a/conf/distro-defaults.ini b/conf/distro-defaults.ini
 new file mode 100644
-index 000000000..eeb974369
+index 0000000000..e337ba0b57
 --- /dev/null
 +++ b/conf/distro-defaults.ini
-@@ -0,0 +1,601 @@
+@@ -0,0 +1,685 @@
 +##################### Grafana Configuration Defaults for distros #####################
 +#
 +# Do not modify this file in grafana installs
@@ -52,6 +52,9 @@ index 000000000..eeb974369
 +
 +# The full public facing url
 +root_url = %(protocol)s://%(domain)s:%(http_port)s/
++
++# Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
++serve_from_sub_path = false
 +
 +# Log web requests
 +router_logging = false
@@ -119,7 +122,7 @@ index 000000000..eeb974369
 +
 +# cache connectionstring options
 +# database: will use Grafana primary database.
-+# redis: config like redis server e.g. `addr=127.0.0.1:6379,pool_size=100,db=grafana`
++# redis: config like redis server e.g. `addr=127.0.0.1:6379,pool_size=100,db=0`. Only addr is required.
 +# memcache: 127.0.0.1:11211
 +connstr =
 +
@@ -185,12 +188,41 @@ index 000000000..eeb974369
 +# set to true if you want to allow browsers to render Grafana in a <frame>, <iframe>, <embed> or <object>. default is false.
 +allow_embedding = false
 +
++# Set to true if you want to enable http strict transport security (HSTS) response header.
++# This is only sent when HTTPS is enabled in this configuration.
++# HSTS tells browsers that the site should only be accessed using HTTPS.
++# The default will change to true in the next minor release, 6.3.
++strict_transport_security = false
++
++# Sets how long a browser should cache HSTS. Only applied if strict_transport_security is enabled.
++strict_transport_security_max_age_seconds = 86400
++
++# Set to true if to enable HSTS preloading option. Only applied if strict_transport_security is enabled.
++strict_transport_security_preload = false
++
++# Set to true if to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled.
++strict_transport_security_subdomains = false
++
++# Set to true to enable the X-Content-Type-Options response header.
++# The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised
++# in the Content-Type headers should not be changed and be followed. The default will change to true in the next minor release, 6.3.
++x_content_type_options = false
++
++# Set to true to enable the X-XSS-Protection header, which tells browsers to stop pages from loading
++# when they detect reflected cross-site scripting (XSS) attacks. The default will change to true in the next minor release, 6.3.
++x_xss_protection = false
++
++
 +#################################### Snapshots ###########################
 +[snapshots]
 +# snapshot sharing options
 +external_enabled = false
 +external_snapshot_url = https://snapshots-origin.raintank.io
 +external_snapshot_name = Publish to snapshot.raintank.io
++
++# Set to true to enable this Grafana instance act as an external snapshot server and allow unauthenticated requests for
++# creating and deleting snapshots.
++public_mode = false
 +
 +# remove expired snapshot
 +snapshot_remove_expired = true
@@ -264,6 +296,9 @@ index 000000000..eeb974369
 +# Set to true to attempt login with OAuth automatically, skipping the login screen.
 +# This setting is ignored if multiple OAuth providers are configured.
 +oauth_auto_login = false
++
++# limit of api_key seconds to live before expiration
++api_key_max_seconds_to_live = -1
 +
 +#################################### Anonymous Auth ######################
 +[auth.anonymous]
@@ -352,6 +387,47 @@ index 000000000..eeb974369
 +tls_client_ca =
 +send_client_credentials_via_post = false
 +
++#################################### SAML Auth ###########################
++[auth.saml] # Enterprise only
++# Defaults to false. If true, the feature is enabled
++enabled = false
++
++# Base64-encoded public X.509 certificate. Used to sign requests to the IdP
++certificate =
++
++# Path to the public X.509 certificate. Used to sign requests to the IdP
++certificate_path =
++
++# Base64-encoded private key. Used to decrypt assertions from the IdP
++private_key =
++
++# Path to the private key. Used to decrypt assertions from the IdP
++private_key_path =
++
++# Base64-encoded IdP SAML metadata XML. Used to verify and obtain binding locations from the IdP
++idp_metadata =
++
++# Path to the SAML metadata XML. Used to verify and obtain binding locations from the IdP
++idp_metadata_path =
++
++# URL to fetch SAML IdP metadata. Used to verify and obtain binding locations from the IdP
++idp_metadata_url =
++
++# Duration, since the IdP issued a response and the SP is allowed to process it. Defaults to 90 seconds
++max_issue_delay = 90s
++
++# Duration, for how long the SP's metadata should be valid. Defaults to 48 hours
++metadata_valid_duration = 48h
++
++# Friendly name or name of the attribute within the SAML assertion to use as the user's name
++assertion_attribute_name = displayName
++
++# Friendly name or name of the attribute within the SAML assertion to use as the user's login handle
++assertion_attribute_login = mail
++
++# Friendly name or name of the attribute within the SAML assertion to use as the user's email
++assertion_attribute_email = mail
++
 +#################################### Basic Auth ##########################
 +[auth.basic]
 +enabled = true
@@ -373,7 +449,8 @@ index 000000000..eeb974369
 +allow_sign_up = true
 +
 +# LDAP backround sync (Enterprise only)
-+sync_cron = @hourly
++# At 1 am every day
++sync_cron = "0 0 1 * * *"
 +active_sync_enabled = false
 +
 +#################################### SMTP / Emailing #####################
@@ -521,8 +598,10 @@ index 000000000..eeb974369
 +#################################### Internal Grafana Metrics ############
 +# Metrics available at HTTP API Url /metrics
 +[metrics]
-+enabled           = true
-+interval_seconds  = 10
++enabled              = true
++interval_seconds     = 10
++# Disable total stats (stat_totals_*) metrics to be generated
++disable_total_stats = false
 +
 +#If both are set, basic auth will be required for the metrics endpoint.
 +basic_auth_username =
@@ -556,6 +635,11 @@ index 000000000..eeb974369
 +# and indicates the initial sampling rate before the actual one
 +# is received from the mothership
 +sampler_param = 1
++# Whether or not to use Zipkin span propagation (x-b3- HTTP headers).
++zipkin_propagation = false
++# Setting this to true disables shared RPC spans.
++# Not disabling is the most common setting when using Zipkin elsewhere in your infrastructure.
++disable_shared_zipkin_spans = false
 +
 +#################################### External Image Storage ##############
 +[external_image_storage]
@@ -607,7 +691,7 @@ index 000000000..eeb974369
 +license_path =
 diff --git a/docs/man/man1/grafana-cli.1 b/docs/man/man1/grafana-cli.1
 new file mode 100644
-index 000000000..171748fcd
+index 0000000000..171748fcda
 --- /dev/null
 +++ b/docs/man/man1/grafana-cli.1
 @@ -0,0 +1,51 @@
@@ -664,7 +748,7 @@ index 000000000..171748fcd
 +.BR http://docs.grafana.org/ .
 diff --git a/docs/man/man1/grafana-server.1 b/docs/man/man1/grafana-server.1
 new file mode 100644
-index 000000000..30b7c1306
+index 0000000000..30b7c1306f
 --- /dev/null
 +++ b/docs/man/man1/grafana-server.1
 @@ -0,0 +1,156 @@
@@ -826,7 +910,7 @@ index 000000000..30b7c1306
 +.BR http://docs.grafana.org/ .
 diff --git a/packaging/rpm/spec/README b/packaging/rpm/spec/README
 new file mode 100644
-index 000000000..f97c2a26b
+index 0000000000..f97c2a26be
 --- /dev/null
 +++ b/packaging/rpm/spec/README
 @@ -0,0 +1,7 @@
@@ -839,10 +923,10 @@ index 000000000..f97c2a26b
 +
 diff --git a/packaging/rpm/spec/grafana.spec b/packaging/rpm/spec/grafana.spec
 new file mode 100644
-index 000000000..85f0dd6aa
+index 0000000000..fb9200cb62
 --- /dev/null
 +++ b/packaging/rpm/spec/grafana.spec
-@@ -0,0 +1,715 @@
+@@ -0,0 +1,766 @@
 +%global grafana_arches %{lua: go_arches = {}
 +  for arch in rpm.expand("%{go_arches}"):gmatch("%S+") do
 +    go_arches[arch] = 1
@@ -853,15 +937,20 @@ index 000000000..85f0dd6aa
 +  end
 +end}
 +
-+# Unbundle grafana vendor sources and instead use BuildRequires
++# Unbundle Grafana vendor sources and instead use BuildRequires
 +# only on platforms that have enough golang devel support.
 +%if 0%{?rhel} == 0
 +%global           unbundle_vendor_sources 1
 +%endif
 +
++%if 0%{?fedora} >= 30
++# Use vendor sources until both Fedora and Grafana properly support golang modules
++%global           unbundle_vendor_sources 0
++%endif
++
 +
 +Name:             grafana
-+Version:          6.2.2
++Version:          6.3.6
 +Release:          1%{?dist}
 +Summary:          Metrics dashboard and graph editor
 +License:          ASL 2.0
@@ -880,11 +969,14 @@ index 000000000..85f0dd6aa
 +Patch1:           001-login-oauth-use-oauth2-exchange.patch
 +Patch2:           002-remove-jaeger-tracing.patch
 +Patch3:           003-new-files.patch
++Patch4:           004-xerrors.patch
++Patch5:           005-mute-shellcheck-grafana-cli.patch
 +
 +# Intersection of go_arches and nodejs_arches
 +ExclusiveArch:    %{grafana_arches}
 +
 +# omit golang debugsource, see BZ995136 and related
++%global           dwz_low_mem_die_limit 0
 +%global           _debugsource_template %{nil}
 +
 +%global           GRAFANA_USER %{name}
@@ -895,7 +987,7 @@ index 000000000..85f0dd6aa
 +%{?systemd_requires}
 +Requires(pre):    shadow-utils
 +
-+BuildRequires:    systemd, golang, go-srpm-macros
++BuildRequires:    git, systemd, golang, go-srpm-macros
 +
 +Recommends: grafana-cloudwatch = %{version}-%{release}
 +Recommends: grafana-elasticsearch = %{version}-%{release}
@@ -909,6 +1001,7 @@ index 000000000..85f0dd6aa
 +Recommends: grafana-postgres = %{version}-%{release}
 +Recommends: grafana-prometheus = %{version}-%{release}
 +Recommends: grafana-stackdriver = %{version}-%{release}
++Recommends: grafana-pcp
 +
 +%if 0%{?unbundle_vendor_sources}
 +# golang build deps. These allow us to unbundle vendor golang source.
@@ -1038,10 +1131,15 @@ index 000000000..85f0dd6aa
 +BuildRequires: golang(gopkg.in/square/go-jose.v2)
 +BuildRequires: golang(gopkg.in/square/go-jose.v2/cipher)
 +BuildRequires: golang(gopkg.in/square/go-jose.v2/json)
++%if 0%{fedora} >= 31
++BuildRequires: golang(gopkg.in/yaml.v2)
++%else
 +BuildRequires: golang(github.com/go-yaml/yaml)
++%endif
 +BuildRequires: golang(golang.org/x/sync/errgroup)
 +BuildRequires: golang(gopkg.in/ldap.v3)
 +BuildRequires: golang(gopkg.in/mail.v2)
++BuildRequires: golang(github.com/jonboulle/clockwork)
 +%endif
 +
 +# Declare all nodejs modules bundled in the webpack - this is for security
@@ -1238,6 +1336,8 @@ index 000000000..85f0dd6aa
 +%patch1 -p1
 +%patch2 -p1
 +%patch3 -p1
++%patch4 -p1
++%patch5 -p1
 +
 +# Set up build subdirs and links
 +mkdir -p %{_builddir}/src/github.com/grafana
@@ -1250,25 +1350,32 @@ index 000000000..85f0dd6aa
 +%if 0%{?unbundle_vendor_sources}
 +# Unbundle all grafana vendor sources, as per BuildRequires above.
 +# An exception is grafana-plugin-model, which is part of grafana.
-+# Another exception is xerrors, which is a transition package
-+# for the new Go 1.13 error values, see https://github.com/golang/xerrors
-+cp --parents -a vendor/github.com/grafana vendor/golang.org/x/xerrors \
-+    vendor/github.com/robfig/cron %{_builddir}
++cp --parents -a vendor/github.com/grafana \
++    vendor/golang.org/x/xerrors \
++    vendor/github.com/robfig vendor/github.com/crewjam/saml \
++    vendor/github.com/ua-parser/uap-go/uaparser  \
++    vendor/github.com/beevik/etree \
++    vendor/github.com/russellhaering/goxmldsig \
++    %{_builddir}
 +rm -r vendor # remove all vendor sources
 +mv %{_builddir}/vendor vendor # put back what we're keeping
 +%endif
 +
 +
 +%build
-+# Build the server-side binaries: grafana-server and grafana-cli
-+%if 0%{?gobuild}
-+# use modern go macros such as in recent Fedora
-+export GOPATH=%{_builddir}:%{gopath}
-+%gobuild -o grafana-cli ./pkg/cmd/grafana-cli
-+%gobuild -o grafana-server ./pkg/cmd/grafana-server
-+%else
++# Build the server-side binaries
 +cd %{_builddir}/src/github.com/grafana/grafana
++%global archbindir bin/`go env GOOS`-`go env GOARCH`
++echo _builddir=%{_builddir} archbindir=%{archbindir}
++[ ! -d %{archbindir} ] && mkdir -p %{archbindir}
 +export GOPATH=%{_builddir}:%{gopath}
++# export GO111MODULE=off
++%if 0%{?fedora} >= 31
++# native fedora golang build but without modules (no grafana support yet)
++go build -mod=vendor -o %{archbindir}/grafana-cli ./pkg/cmd/grafana-cli
++go build -mod=vendor -o %{archbindir}/grafana-server ./pkg/cmd/grafana-server
++%else
++# use the grafana build.go script.
 +go run build.go build
 +%endif
 +
@@ -1283,14 +1390,17 @@ index 000000000..85f0dd6aa
 +[ ! -d bin/arm64 ] && ln -sf linux-arm64 bin/aarch64
 +[ ! -d bin/aarch64 ] && ln -sf linux-aarch64 bin/aarch64
 +
-+# binaries
++# dirs, shared files, public html, webpack
 +install -d %{buildroot}%{_sbindir}
-+install -p -m 755 bin/%{_arch}/%{name}-server %{buildroot}%{_sbindir}
-+install -p -m 755 bin/%{_arch}/%{name}-cli %{buildroot}%{_sbindir}
-+
-+# other shared files, public html, webpack
-+install -d %{buildroot}%{_datadir}/%{name}
++install -d %{buildroot}%{_datadir}/%{name}/bin
 +cp -a conf public %{buildroot}%{_datadir}/%{name}
++
++# wrappers
++install -p -m 755 packaging/wrappers/grafana-cli %{buildroot}%{_sbindir}/%{name}-cli
++
++# binaries
++install -p -m 755 %{archbindir}/%{name}-server %{buildroot}%{_sbindir}
++install -p -m 755 %{archbindir}/%{name}-cli %{buildroot}%{_datadir}/%{name}/bin
 +
 +# man pages
 +install -d %{buildroot}%{_mandir}/man1
@@ -1351,6 +1461,8 @@ index 000000000..85f0dd6aa
 +rm -f pkg/services/provisioning/dashboards/file_reader_linux_test.go
 +rm -f pkg/services/provisioning/dashboards/file_reader_test.go
 +rm -f pkg/services/sqlstore/alert_test.go
++rm -f pkg/services/sqlstore/apikey_test.go
++export GO111MODULE=off
 +go test ./pkg/...
 +
 +
@@ -1373,6 +1485,7 @@ index 000000000..85f0dd6aa
 +%attr(-, %{GRAFANA_USER}, %{GRAFANA_GROUP}) %dir %{_sharedstatedir}/%{name}/plugins
 +
 +# shared directory and all files therein, except some datasources
++%{_datadir}/%{name}/bin
 +%{_datadir}/%{name}/public
 +
 +# built-in datasources that are sub-packaged
@@ -1449,6 +1562,28 @@ index 000000000..85f0dd6aa
 +
 +
 +%changelog
++* Wed Nov 20 2019 Mark Goodwin <mgoodwin@redhat.com> 6.3.6-1
++- add weak depenency on grafana-pcp
++- add patch to mute shellcheck SC1090 for grafana-cli
++- update to 6.3.6 upstream community sources, see CHANGELOG
++
++* Thu Sep 05 2019 Mark Goodwin <mgoodwin@redhat.com> 6.3.5-1
++- drop uaparser patch now it's upstream
++- add xerrors patch, see https://github.com/golang/go/issues/32246
++- use vendor sources on rawhide until modules are fully supported
++- update to latest upstream community sources, see CHANGELOG
++
++* Fri Aug 30 2019 Mark Goodwin <mgoodwin@redhat.com> 6.3.4-1
++- include fix for CVE-2019-15043
++- add patch for uaparser on 32bit systems
++- update to latest upstream community sources, see CHANGELOG
++
++* Wed Jul 31 2019 Mark Goodwin <mgoodwin@redhat.com> 6.2.5-1
++- update to latest upstream community sources, see CHANGELOG
++
++* Thu Jul 25 2019 Fedora Release Engineering <releng@fedoraproject.org> - 6.2.2-2
++- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
++
 +* Fri Jun 07 2019 Mark Goodwin <mgoodwin@redhat.com> 6.2.2-1
 +- split out some datasource plugins to sub-packages
 +- update to latest upstream community sources, see CHANGELOG
@@ -1560,7 +1695,7 @@ index 000000000..85f0dd6aa
 +- native RPM spec build with current tagged v5.2.5 sources
 diff --git a/packaging/rpm/spec/make_grafana_webpack.sh b/packaging/rpm/spec/make_grafana_webpack.sh
 new file mode 100755
-index 000000000..47a8025ff
+index 0000000000..47a8025ff4
 --- /dev/null
 +++ b/packaging/rpm/spec/make_grafana_webpack.sh
 @@ -0,0 +1,61 @@

@@ -1,0 +1,12 @@
+diff --git a/packaging/wrappers/grafana-cli b/packaging/wrappers/grafana-cli
+index 9cad151c0d..4c963d90ac 100755
+--- a/packaging/wrappers/grafana-cli
++++ b/packaging/wrappers/grafana-cli
+@@ -24,6 +24,7 @@ if [ ! -x $EXECUTABLE ]; then
+ fi
+ 
+ # overwrite settings from default file
++#shellcheck disable=SC1090
+ if [ -f "$DEFAULT" ]; then
+   . "$DEFAULT"
+ fi
